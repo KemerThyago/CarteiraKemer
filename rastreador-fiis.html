@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rastreador de Aportes — FIIs</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --surface2: #f0efe9;
+      --border: rgba(0,0,0,0.1);
+      --border-strong: rgba(0,0,0,0.2);
+      --text: #1a1917;
+      --text-muted: #6b6a65;
+      --text-hint: #a09f9a;
+      --green: #1a6b47;
+      --green-bg: #e6f4ed;
+      --green-border: #a8d5bc;
+      --amber: #7a4f00;
+      --amber-bg: #fdf3dc;
+      --amber-border: #e8c87a;
+      --blue: #0f4c8a;
+      --blue-bg: #e8f0fb;
+      --blue-border: #a8c4f0;
+      --red: #8a1f1f;
+      --red-bg: #fde8e8;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: -0.3px;
+    }
+
+    header p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .metric {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 19px;
+      font-weight: 500;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .motivacao {
+      border-radius: var(--radius-sm);
+      padding: 11px 14px;
+      margin-bottom: 1.25rem;
+      font-size: 13px;
+      line-height: 1.5;
+      border: 1px solid var(--blue-border);
+      background: var(--blue-bg);
+      color: var(--blue);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.125rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    input[type="month"],
+    input[type="number"],
+    input[type="text"] {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      padding: 8px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface2);
+      color: var(--text);
+      outline: none;
+      flex: 1;
+      min-width: 90px;
+      transition: border-color 0.15s;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      background: var(--surface);
+    }
+
+    button.primary {
+      width: 100%;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 9px 16px;
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button.primary:hover { opacity: 0.85; }
+    button.primary:active { transform: scale(0.98); }
+
+    .row-aporte {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .row-aporte:last-child { border-bottom: none; }
+
+    .mes-badge {
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'DM Mono', monospace;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid var(--green-border);
+    }
+
+    .obs-text {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-left: 8px;
+    }
+
+    .valor-text {
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .del-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-hint);
+      font-size: 15px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      transition: background 0.1s, color 0.1s;
+      line-height: 1;
+    }
+
+    .del-btn:hover {
+      background: var(--red-bg);
+      color: var(--red);
+    }
+
+    .calendario {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .cal-cell {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 500;
+      font-family: 'DM Mono', monospace;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-muted);
+      cursor: default;
+      transition: transform 0.1s;
+    }
+
+    .cal-cell:hover { transform: scale(1.1); }
+    .cal-cell.aportado { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+    .cal-cell.futuro { opacity: 0.35; }
+
+    .empty-state {
+      font-size: 13px;
+      color: var(--text-muted);
+      padding: 8px 0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141412;
+        --surface: #1e1d1b;
+        --surface2: #252422;
+        --border: rgba(255,255,255,0.1);
+        --border-strong: rgba(255,255,255,0.18);
+        --text: #f0efe9;
+        --text-muted: #8a8880;
+        --text-hint: #5a5956;
+        --green: #6ed6a0;
+        --green-bg: #0d2e1e;
+        --green-border: #1a5c38;
+        --amber: #f0c060;
+        --amber-bg: #2a1f00;
+        --amber-border: #5a4000;
+        --blue: #7ab8f5;
+        --blue-bg: #0a1e36;
+        --blue-border: #1a3f6a;
+        --red: #f08080;
+        --red-bg: #2a0a0a;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="ti ti-chart-line" aria-hidden="true" style="font-size:20px; vertical-align:-2px; margin-right:6px;"></i>Rastreador de Aportes — FIIs</h1>
+      <p>Registre seus aportes mensais e mantenha a consistência</p>
+    </header>
+
+    <div class="metrics">
+      <div class="metric"><p class="metric-label">Sequência atual</p><p class="metric-value" id="m-streak">0 meses</p></div>
+      <div class="metric"><p class="metric-label">Total aportado</p><p class="metric-value" id="m-total">R$ 0</p></div>
+      <div class="metric"><p class="metric-label">Aportes</p><p class="metric-value" id="m-count">0</p></div>
+      <div class="metric"><p class="metric-label">Média mensal</p><p class="metric-value" id="m-media">R$ 0</p></div>
+    </div>
+
+    <div class="motivacao" id="motivacao">
+      Registre seu primeiro aporte e comece sua sequência!
+    </div>
+
+    <div class="card">
+      <p class="card-title">Registrar aporte</p>
+      <div class="input-row">
+        <input type="month" id="inp-mes">
+        <input type="number" id="inp-valor" placeholder="Valor (R$)" min="1" step="10" style="max-width:140px;">
+        <input type="text" id="inp-obs" placeholder="Obs. (ex: MXRF11)">
+      </div>
+      <button class="primary" onclick="registrar()">
+        <i class="ti ti-plus" aria-hidden="true"></i> Registrar aporte
+      </button>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Histórico</p>
+      <div id="historico"><p class="empty-state">Nenhum aporte ainda.</p></div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Calendário de consistência — últimos 12 meses</p>
+      <div class="calendario" id="calendario"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'fiis_aportes_v1';
+
+    function carregar() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch(e) { return []; }
+    }
+
+    function salvar(dados) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(dados)); } catch(e) {}
+    }
+
+    function getMesAtual() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    }
+
+    function formatarMes(ym) {
+      const [y, m] = ym.split('-');
+      const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      return meses[parseInt(m)-1] + '/' + y.slice(2);
+    }
+
+    function calcStreak(dados) {
+      if (!dados.length) return 0;
+      const mesesSet = new Set(dados.map(a => a.mes));
+      let streak = 0;
+      const hoje = new Date();
+      let cur = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      while (true) {
+        const key = cur.getFullYear() + '-' + String(cur.getMonth()+1).padStart(2,'0');
+        if (mesesSet.has(key)) {
+          streak++;
+          cur.setMonth(cur.getMonth()-1);
+        } else break;
+      }
+      return streak;
+    }
+
+    function getMensagem(streak) {
+      if (streak === 0) return { txt: 'Registre seu primeiro aporte e comece sua sequência!', tipo: 'blue' };
+      if (streak === 1) return { txt: 'Primeiro aporte registrado! O mais difícil foi começar. Continue no próximo mês.', tipo: 'green' };
+      if (streak < 3)  return { txt: streak + ' meses seguidos! Você está construindo o hábito. Não quebre a sequência.', tipo: 'green' };
+      if (streak < 6)  return { txt: streak + ' meses consecutivos — você já tem mais disciplina que a maioria dos investidores. Foco!', tipo: 'green' };
+      if (streak < 12) return { txt: streak + ' meses sem parar! Os dividendos já estão trabalhando por você.', tipo: 'green' };
+      return { txt: streak + ' meses seguidos! Consistência de nível alto. Sua aposentadoria está sendo construída mês a mês.', tipo: 'green' };
+    }
+
+    function renderizar() {
+      const dados = carregar();
+      const total = dados.reduce((s, a) => s + a.valor, 0);
+      const streak = calcStreak(dados);
+      const media = dados.length ? total / dados.length : 0;
+
+      document.getElementById('m-streak').textContent = streak + (streak === 1 ? ' mês' : ' meses');
+      document.getElementById('m-total').textContent = 'R$ ' + Math.round(total).toLocaleString('pt-BR');
+      document.getElementById('m-count').textContent = dados.length;
+      document.getElementById('m-media').textContent = 'R$ ' + Math.round(media).toLocaleString('pt-BR');
+
+      const msg = getMensagem(streak);
+      const mbox = document.getElementById('motivacao');
+      mbox.style.background = `var(--${msg.tipo}-bg)`;
+      mbox.style.color = `var(--${msg.tipo})`;
+      mbox.style.borderColor = `var(--${msg.tipo}-border)`;
+      mbox.textContent = msg.txt;
+
+      const hist = document.getElementById('historico');
+      if (!dados.length) {
+        hist.innerHTML = '<p class="empty-state">Nenhum aporte ainda.</p>';
+      } else {
+        const sorted = [...dados].sort((a,b) => b.mes.localeCompare(a.mes));
+        hist.innerHTML = sorted.map(a => `
+          <div class="row-aporte">
+            <div style="display:flex;align-items:center;">
+              <span class="mes-badge">${formatarMes(a.mes)}</span>
+              <span class="obs-text">${a.obs || '—'}</span>
+            </div>
+            <div style="display:flex;align-items:center;">
+              <span class="valor-text">R$ ${a.valor.toLocaleString('pt-BR')}</span>
+              <button class="del-btn" onclick="remover('${a.id}')" aria-label="Remover aporte">
+                <i class="ti ti-x" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>`).join('');
+      }
+
+      const cal = document.getElementById('calendario');
+      const mesesSet = new Set(dados.map(a => a.mes));
+      const hoje = new Date();
+      const nomeMeses = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+      let cells = '';
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+        const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+        const isFuturo = key > getMesAtual();
+        const temAporte = mesesSet.has(key);
+        let cls = 'cal-cell';
+        if (isFuturo) cls += ' futuro';
+        else if (temAporte) cls += ' aportado';
+        cells += `<div class="${cls}" title="${formatarMes(key)}">${nomeMeses[d.getMonth()]}</div>`;
+      }
+      cal.innerHTML = cells;
+    }
+
+    function registrar() {
+      const mes = document.getElementById('inp-mes').value;
+      const valorStr = document.getElementById('inp-valor').value;
+      const obs = document.getElementById('inp-obs').value.trim();
+      if (!mes || !valorStr) { alert('Preencha o mês e o valor.'); return; }
+      const valor = parseFloat(valorStr);
+      if (isNaN(valor) || valor <= 0) { alert('Valor inválido.'); return; }
+      const dados = carregar();
+      const existe = dados.find(a => a.mes === mes);
+      if (existe) {
+        existe.valor += valor;
+        if (obs) existe.obs = obs;
+      } else {
+        dados.push({ id: Date.now().toString(), mes, valor, obs });
+      }
+      salvar(dados);
+      document.getElementById('inp-valor').value = '';
+      document.getElementById('inp-obs').value = '';
+      renderizar();
+    }
+
+    function remover(id) {
+      if (!confirm('Remover este aporte?')) return;
+      const dados = carregar().filter(a => a.id !== id);
+      salvar(dados);
+      renderizar();
+    }
+
+    document.getElementById('inp-mes').value = getMesAtual();
+    renderizar();
+  </script>
+</body>
+</html>
