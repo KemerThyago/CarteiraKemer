@@ -252,6 +252,26 @@
       padding: 8px 0;
     }
 
+    .collapsible-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .collapsible-header:hover .card-title { color: var(--text); }
+    .chevron { font-size: 16px; color: var(--text-muted); transition: transform 0.2s; }
+    .chevron.open { transform: rotate(180deg); }
+    .collapsible-body { overflow: hidden; transition: max-height 0.3s ease; max-height: 0; }
+    .collapsible-body.open { max-height: 2000px; }
+    .fii-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .fii-row:last-child { border-bottom: none; }
+    .fii-ticker { font-size: 13px; font-weight: 500; font-family: 'DM Mono', monospace; padding: 2px 8px; border-radius: 4px; background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+    .fii-seg { font-size: 12px; color: var(--text-muted); margin-left: 8px; }
+    .bar-wrap { height: 4px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-top: 4px; width: 60px; }
+    .bar-fill { height: 100%; border-radius: 4px; background: var(--blue); }  
+
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #141412;
@@ -289,6 +309,31 @@
       <div class="metric"><p class="metric-label">Total aportado</p><p class="metric-value" id="m-total">R$ 0</p></div>
       <div class="metric"><p class="metric-label">Aportes</p><p class="metric-value" id="m-count">0</p></div>
       <div class="metric"><p class="metric-label">Média mensal</p><p class="metric-value" id="m-media">R$ 0</p></div>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="collapsible-header" onclick="toggleCarteira()">
+        <p class="card-title" style="margin:0;">
+          <i class="ti ti-building-bank" aria-hidden="true" style="margin-right:4px;"></i>
+          Carteira atual
+        </p>
+        <i class="ti ti-chevron-down chevron" id="chevron-carteira" aria-hidden="true"></i>
+      </div>
+      <div class="collapsible-body" id="body-carteira">
+        <div style="margin-top:12px;">
+          <div class="input-row">
+            <input type="text" id="fii-ticker" placeholder="Ticker (ex: MXRF11)" style="text-transform:uppercase;max-width:150px;">
+            <input type="number" id="fii-cotas" placeholder="Cotas" min="1" step="1" style="max-width:100px;">
+            <input type="number" id="fii-valor" placeholder="Valor total (R$)" min="0" step="0.01">
+            <input type="text" id="fii-seg" placeholder="Segmento (ex: Papel)">
+          </div>
+          <button class="primary" onclick="adicionarFii()">
+            <i class="ti ti-plus" aria-hidden="true"></i> Adicionar FII
+          </button>
+        </div>
+        <div id="carteira-lista" style="margin-top:14px;"></div>
+        <div id="carteira-totais" style="margin-top:10px;"></div>
+      </div>
     </div>
 
     <div class="motivacao" id="motivacao">
