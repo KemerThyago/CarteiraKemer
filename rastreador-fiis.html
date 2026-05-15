@@ -497,8 +497,95 @@
       renderizar();
     }
 
+    const CARTEIRA_KEY = 'fiis_carteira_v1';
+
+    function carregarCarteira() {
+      try { const r = localStorage.getItem(CARTEIRA_KEY); return r ? JSON.parse(r) : []; } catch(e) { return []; }
+    }
+
+    function salvarCarteira(d) {
+      try { localStorage.setItem(CARTEIRA_KEY, JSON.stringify(d)); } catch(e) {}
+    }
+
+    function toggleCarteira() {
+      const body = document.getElementById('body-carteira');
+      const chev = document.getElementById('chevron-carteira');
+      body.classList.toggle('open');
+      chev.classList.toggle('open');
+    }
+
+    function adicionarFii() {
+      const ticker = document.getElementById('fii-ticker').value.trim().toUpperCase();
+      const cotas = parseInt(document.getElementById('fii-cotas').value);
+      const valor = parseFloat(document.getElementById('fii-valor').value);
+      const seg = document.getElementById('fii-seg').value.trim();
+      if (!ticker || !cotas || !valor) { alert('Preencha ticker, cotas e valor.'); return; }
+      const dados = carregarCarteira();
+      const existe = dados.find(f => f.ticker === ticker);
+      if (existe) {
+        existe.cotas = cotas;
+        existe.valor = valor;
+        if (seg) existe.seg = seg;
+      } else {
+        dados.push({ id: Date.now().toString(), ticker, cotas, valor, seg });
+      }
+      salvarCarteira(dados);
+      document.getElementById('fii-ticker').value = '';
+      document.getElementById('fii-cotas').value = '';
+      document.getElementById('fii-valor').value = '';
+      document.getElementById('fii-seg').value = '';
+      renderizarCarteira();
+    }
+
+    function removerFii(id) {
+      if (!confirm('Remover este FII?')) return;
+      salvarCarteira(carregarCarteira().filter(f => f.id !== id));
+      renderizarCarteira();
+    }
+
+    function renderizarCarteira() {
+      const dados = carregarCarteira();
+      const lista = document.getElementById('carteira-lista');
+      const totais = document.getElementById('carteira-totais');
+      if (!dados.length) {
+        lista.innerHTML = '<p class="empty-state">Nenhum FII adicionado ainda.</p>';
+        totais.innerHTML = '';
+        return;
+      }
+      const totalValor = dados.reduce((s, f) => s + f.valor, 0);
+      const cores = ['#378ADD','#1D9E75','#7F77DD','#D85A30','#E8A020','#2BA8A8','#C060C0'];
+      lista.innerHTML = dados.map((f, i) => {
+        const pct = totalValor > 0 ? ((f.valor / totalValor) * 100).toFixed(1) : 0;
+        const cor = cores[i % cores.length];
+        return `<div class="fii-row">
+          <div style="display:flex;align-items:center;">
+            <span class="fii-ticker" style="background:${cor}18;color:${cor};border-color:${cor}44;">${f.ticker}</span>
+            <span class="fii-seg">${f.seg || '—'} · ${f.cotas} cotas</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="text-align:right;">
+              <div class="valor-text">R$ ${f.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+              <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${cor};"></div></div>
+            </div>
+            <button class="del-btn" onclick="removerFii('${f.id}')" aria-label="Remover FII">
+              <i class="ti ti-x" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+      totais.innerHTML = `<div style="display:flex;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);font-size:13px;">
+        <span style="color:var(--text-muted);">${dados.length} FII${dados.length > 1 ? 's' : ''} · ${dados.reduce((s,f)=>s+f.cotas,0)} cotas</span>
+        <span style="font-family:'DM Mono',monospace;font-weight:500;">R$ ${totalValor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+      </div>`;
+    }
+
+    renderizarCarteira();
+
+
     document.getElementById('inp-mes').value = getMesAtual();
     renderizar();
+
+
   </script>
 </body>
 </html>
