@@ -272,6 +272,58 @@
     .bar-wrap { height: 4px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-top: 4px; width: 60px; }
     .bar-fill { height: 100%; border-radius: 4px; background: var(--blue); }  
 
+        .graficos-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    @media (max-width: 520px) { .graficos-grid { grid-template-columns: 1fr; } }
+    .grafico-card {
+      background: var(--surface2);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+    .grafico-titulo {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .slider-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      min-width: 110px;
+    }
+    .slider-val {
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'DM Mono', monospace;
+      min-width: 70px;
+      text-align: right;
+    }
+    .sim-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .sim-metric {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+    }
+    .sim-metric-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+    .sim-metric-value { font-size: 14px; font-weight: 500; font-family: 'DM Mono', monospace; }
+
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #141412;
@@ -333,6 +385,61 @@
         </div>
         <div id="carteira-lista" style="margin-top:14px;"></div>
         <div id="carteira-totais" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="card" id="card-graficos" style="display:none;margin-bottom:1rem;">
+      <div class="collapsible-header" onclick="toggleGraficos()">
+        <p class="card-title" style="margin:0;">
+          <i class="ti ti-chart-bar" aria-hidden="true" style="margin-right:4px;"></i>
+          Gráficos & Simulação
+        </p>
+        <i class="ti ti-chevron-down chevron" id="chevron-graficos" aria-hidden="true"></i>
+      </div>
+      <div class="collapsible-body" id="body-graficos">
+        <div style="margin-top:14px;">
+    
+          <!-- Composição -->
+          <p class="grafico-titulo">Composição da carteira</p>
+          <div class="graficos-grid" style="margin-bottom:16px;">
+            <div class="grafico-card">
+              <p class="grafico-titulo">Por valor (R$)</p>
+              <canvas id="chart-valor" height="180"></canvas>
+            </div>
+            <div class="grafico-card">
+              <p class="grafico-titulo">Distribuição (%)</p>
+              <canvas id="chart-pct" height="180"></canvas>
+            </div>
+          </div>
+    
+          <!-- Simulação -->
+          <p class="grafico-titulo" style="margin-top:8px;">Simulação de crescimento</p>
+          <div class="sim-metrics">
+            <div class="sim-metric"><p class="sim-metric-label">Patrimônio atual</p><p class="sim-metric-value" id="sim-patrimonio-atual">R$ 0</p></div>
+            <div class="sim-metric"><p class="sim-metric-label">Patrimônio final</p><p class="sim-metric-value" id="sim-patrimonio-final">R$ 0</p></div>
+            <div class="sim-metric"><p class="sim-metric-label">Dividendos/mês</p><p class="sim-metric-value" id="sim-dividendos">R$ 0</p></div>
+            <div class="sim-metric"><p class="sim-metric-label">Total aportado</p><p class="sim-metric-value" id="sim-total-aportado">R$ 0</p></div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">Aporte mensal</span>
+            <input type="range" min="100" max="3000" value="500" step="50" id="sim-aporte" style="flex:1;" oninput="atualizarSim()">
+            <span class="slider-val" id="sim-aporte-out">R$ 500</span>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">Anos investindo</span>
+            <input type="range" min="1" max="35" value="20" step="1" id="sim-anos" style="flex:1;" oninput="atualizarSim()">
+            <span class="slider-val" id="sim-anos-out">20 anos</span>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">DY anual estimado</span>
+            <input type="range" min="6" max="14" value="9" step="0.5" id="sim-dy" style="flex:1;" oninput="atualizarSim()">
+            <span class="slider-val" id="sim-dy-out">9%</span>
+          </div>
+          <div class="grafico-card" style="margin-top:8px;">
+            <canvas id="chart-sim" height="200"></canvas>
+          </div>
+          <div id="sim-aviso" style="margin-top:8px;font-size:12px;border-radius:var(--radius-sm);padding:8px 12px;"></div>
+        </div>
       </div>
     </div>
 
@@ -579,8 +686,150 @@
       </div>`;
     }
 
-    renderizarCarteira();
 
+        // ---- GRÁFICOS ----
+    const CHART_CORES = ['#378ADD','#1D9E75','#7F77DD','#D85A30','#E8A020','#2BA8A8','#C060C0'];
+    let chartValor, chartPct, chartSim;
+
+    function toggleGraficos() {
+      const body = document.getElementById('body-graficos');
+      const chev = document.getElementById('chevron-graficos');
+      body.classList.toggle('open');
+      chev.classList.toggle('open');
+      if (body.classList.contains('open')) {
+        setTimeout(() => { renderizarGraficos(); atualizarSim(); }, 50);
+      }
+    }
+
+    function renderizarGraficos() {
+      const dados = carregarCarteira();
+      if (!dados.length) return;
+
+      const labels = dados.map(f => f.ticker);
+      const valores = dados.map(f => f.valor);
+      const total = valores.reduce((s, v) => s + v, 0);
+      const pcts = valores.map(v => parseFloat(((v / total) * 100).toFixed(1)));
+
+      // Gráfico por valor
+      if (chartValor) chartValor.destroy();
+      chartValor = new Chart(document.getElementById('chart-valor'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ data: valores, backgroundColor: CHART_CORES, borderRadius: 4, borderSkipped: false }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              ticks: { callback: v => 'R$' + (v/1000).toFixed(1) + 'k', font: { size: 10 }, color: '#888' },
+              grid: { color: 'rgba(136,135,128,0.12)' }
+            },
+            x: { ticks: { font: { size: 10 }, color: '#888' }, grid: { display: false } }
+          }
+        }
+      });
+
+      // Gráfico pizza %
+      if (chartPct) chartPct.destroy();
+      chartPct = new Chart(document.getElementById('chart-pct'), {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{ data: pcts, backgroundColor: CHART_CORES, borderWidth: 2, borderColor: 'transparent' }]
+        },
+        options: {
+          responsive: true,
+          cutout: '60%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { font: { size: 10 }, color: '#888', boxWidth: 10, padding: 8 }
+            },
+            tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.raw + '%' } }
+          }
+        }
+      });
+    }
+
+    function atualizarSim() {
+      const dados = carregarCarteira();
+      const patrimonioAtual = dados.reduce((s, f) => s + f.valor, 0);
+      const aporte = parseInt(document.getElementById('sim-aporte').value);
+      const anos = parseInt(document.getElementById('sim-anos').value);
+      const dy = parseFloat(document.getElementById('sim-dy').value) / 100;
+      const taxaMensal = Math.pow(1 + dy, 1/12) - 1;
+
+      document.getElementById('sim-aporte-out').textContent = 'R$ ' + aporte.toLocaleString('pt-BR');
+      document.getElementById('sim-anos-out').textContent = anos + ' anos';
+      document.getElementById('sim-dy-out').textContent = parseFloat(document.getElementById('sim-dy').value).toFixed(1) + '%';
+      document.getElementById('sim-patrimonio-atual').textContent = 'R$ ' + Math.round(patrimonioAtual).toLocaleString('pt-BR');
+
+      let patrimonio = patrimonioAtual;
+      let totalAportado = patrimonioAtual;
+      const labelsChart = ['Hoje'];
+      const dataPatrimonio = [Math.round(patrimonioAtual)];
+      const dataAportado = [Math.round(patrimonioAtual)];
+
+      for (let a = 1; a <= anos; a++) {
+        for (let m = 0; m < 12; m++) {
+          patrimonio = patrimonio * (1 + taxaMensal) + aporte;
+          totalAportado += aporte;
+        }
+        labelsChart.push('Ano ' + a);
+        dataPatrimonio.push(Math.round(patrimonio));
+        dataAportado.push(Math.round(totalAportado));
+      }
+
+      const dividendosMes = Math.round(patrimonio * (dy / 12));
+      document.getElementById('sim-patrimonio-final').textContent = 'R$ ' + Math.round(patrimonio).toLocaleString('pt-BR');
+      document.getElementById('sim-dividendos').textContent = 'R$ ' + dividendosMes.toLocaleString('pt-BR');
+      document.getElementById('sim-total-aportado').textContent = 'R$ ' + Math.round(totalAportado).toLocaleString('pt-BR');
+
+      const aviso = document.getElementById('sim-aviso');
+      if (dividendosMes >= 3000) {
+        aviso.style.background = 'var(--green-bg)'; aviso.style.color = 'var(--green)'; aviso.style.border = '1px solid var(--green-border)';
+        aviso.textContent = 'Com esse plano você chegará a R$ ' + dividendosMes.toLocaleString('pt-BR') + '/mês em dividendos em ' + anos + ' anos.';
+      } else {
+        aviso.style.background = 'var(--amber-bg)'; aviso.style.color = 'var(--amber)'; aviso.style.border = '1px solid var(--amber-border)';
+        aviso.textContent = 'Dividendos de R$ ' + dividendosMes.toLocaleString('pt-BR') + '/mês em ' + anos + ' anos. Aumente o aporte ou o prazo para chegar a R$ 3.000+.';
+      }
+
+      if (chartSim) chartSim.destroy();
+      chartSim = new Chart(document.getElementById('chart-sim'), {
+        type: 'line',
+        data: {
+          labels: labelsChart,
+          datasets: [
+            { label: 'Patrimônio', data: dataPatrimonio, borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.07)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2 },
+            { label: 'Aportado', data: dataAportado, borderColor: '#378ADD', borderDash: [5,4], fill: false, tension: 0.4, pointRadius: 0, borderWidth: 1.5 }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              ticks: { callback: v => v >= 1000000 ? 'R$' + (v/1000000).toFixed(1) + 'M' : 'R$' + (v/1000).toFixed(0) + 'k', font: { size: 10 }, color: '#888' },
+              grid: { color: 'rgba(136,135,128,0.12)' }
+            },
+            x: { ticks: { font: { size: 10 }, color: '#888', maxTicksLimit: 6, maxRotation: 0 }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function mostrarGraficosSeTemCarteira() {
+      const dados = carregarCarteira();
+      const card = document.getElementById('card-graficos');
+      if (dados.length > 0) card.style.display = 'block';
+      else card.style.display = 'none';
+    }
+
+
+    renderizarCarteira();
+    mostrarGraficosSeTemCarteira();
 
     document.getElementById('inp-mes').value = getMesAtual();
     renderizar();
